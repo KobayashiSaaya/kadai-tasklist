@@ -1,7 +1,8 @@
 class TasksController < ApplicationController
-  before_action :require_user_logged_in, only: [:index, :show, :create, :new, :update, :destory, :edit]
+  before_action :require_user_logged_in
 
   before_action :set_task, only: [:show, :edit, :update, :destroy]
+  
   def index
     @tasks = Task.all
   end
@@ -14,15 +15,15 @@ class TasksController < ApplicationController
   end
 
   def create
-     @task = Task.new(task_params)
-
-    if @task.save
+     @task = current_user.tasks.build(task_params)
+     if @task.save
       flash[:success] = 'Task が正常に投稿されました'
-      redirect_to @task
-    else
+      redirect_to tasks_url
+     else
+      @tasks = current_user.tasks.order(id: :desc).page(params[:page])
       flash.now[:danger] = 'Task が投稿されませんでした'
-      render :new
-    end
+      render 'tasks/new'
+     end
   end
 
   def edit
@@ -31,7 +32,7 @@ class TasksController < ApplicationController
   def update
     if @task.update(task_params)
       flash[:success] = 'Task は正常に更新されました'
-      redirect_to @task
+      redirect_to tasks_url
     else
       flash.now[:danger] = 'Task は更新されませんでした'
       render :edit
